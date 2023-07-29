@@ -1,1 +1,21 @@
+##Convert Time (200901) to parsed Time (2009-01-01)
+
+mutate(Time = as.Date(paste0(Time, '01'), format = '%Y%m%d'))
+
+##select few columns 
+   For example: select first second and third columns
+dplyr::select(1,2,3)
+
+##Generate new variables based on conditional logics
+
+mutate(B = ifelse(A <= 0, 100, 100+D))  
+
+B = {100 IF A <= 0 ; 100+D if A > 0}
+
+
+
+
+
+
+
 
