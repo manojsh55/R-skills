@@ -12,7 +12,146 @@ mutate(B = ifelse(A <= 0, 100, 100+D))
 
 B = {100 IF A <= 0 ; 100+D if A > 0}
 
+###Analysis of " https://agdatanews.substack.com/p/durian-the-king-of-fruits-is-booming?r=i2qe&utm_campaign=post&utm_medium=web"
 
+rm(list=ls())
+setwd("C:/Dropbox/Research/_DeLoach/Ag_Data_News/")
+
+
+# If a package is installed, it will be loaded. If any are not, the missing package(s) will be installed 
+# from CRAN and then loaded.
+pacman::p_load(ggplot2,readxl,dplyr,patchwork,hrbrthemes,httr,RColorBrewer,ggpubr)
+
+GET("https://files.asmith.ucdavis.edu/Total.xlsx", write_disk(tf1 <- tempfile(fileext = ".xlsx")))
+total_data=read_excel(tf1)
+
+
+# Plot 1
+plot_1 <- ggplot(total_data, aes(x=Year, y=Value_Billion, group=Group, label=Value_Billion)) +
+  geom_line(aes(color=Group),size=1.5)+
+  geom_point(aes(color=Group),size=3)+
+    geom_text(hjust=0.7, vjust=-1)+
+  ggtitle("Import and Export Value of Fruit in China")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))+
+  labs(color="Category",x="Year", y = "Total Value (Billion Dollars)",caption="https://agdatanews.substack.com \n Source: Ministry of Agricultural and Rural Affairs of China")+
+  ylim(6,15.5)
+
+plot_1
+ggsave("plot_1.png",bg="white")
+
+
+
+###Plot of China Imported Fruit by Type in 2021
+GET("https://files.asmith.ucdavis.edu/Type.xlsx", write_disk(tf2 <- tempfile(fileext = ".xlsx")))
+type_data=read_excel(tf2)
+
+# Plot 2
+plot_2 <- ggplot(type_data, aes(x=Type, y=Volume, label=Volume,fill=Type)) +
+  geom_bar(position = "stack", stat="identity", show.legend = FALSE)+
+  labs(x = "Fruit", y = "Thousand Tons",caption="Source: Ministry of Agricultural and Rural Affairs of China \n https://agdatanews.substack.com")+
+  geom_text(hjust=0.7, vjust=-1)+
+  ggtitle("China Imported Fruit Volume by Type in 2021")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylim(0,7)
+
+plot_2
+ggsave("plot_2.png",bg="white")
+
+
+
+### Plot of Import Volume and Value of Durian In China
+GET("https://files.asmith.ucdavis.edu/Durian.xlsx", write_disk(tf3 <- tempfile(fileext = ".xlsx")))
+durian_data=read_excel(tf3)
+
+
+# Value used to transform the data
+coeff <- 200
+# A few constants
+volumeColor <- "#69b3a2"
+valueColor <- rgb(0.8, 0.4, 0.3, 1)
+
+plot_3a <- ggplot(durian_data, aes(x=Year, y = `Volume_Thousand Tons`, label = `Volume_Thousand Tons`)) +
+  geom_bar( aes(y=`Volume_Thousand Tons`), stat="identity", size=.1, fill=volumeColor, color=volumeColor, alpha=.4) + 
+  geom_line( aes(y=Amount_billion_dollars * coeff), size=2, color=valueColor) +
+  geom_point(aes(y=Amount_billion_dollars * coeff), size=4, color=valueColor)+
+  scale_y_continuous(
+    # Features of the first axis
+    name = "Volume (Thousand Tons)",
+    # Add a second axis and specify its features
+    sec.axis = sec_axis(~./coeff, name="Value(Billion Dollars)")
+  ) + 
+  theme_minimal()+
+  theme(
+    axis.title.y = element_text(color = volumeColor, size=13),
+    axis.title.y.right = element_text(color = valueColor, size=13)
+  ) +
+  theme(plot.title = element_text(hjust = 0.4))+
+  ggtitle("Import Volume and Value of Durian In China") + 
+  geom_text(aes(label = `Volume_Thousand Tons`),hjust=0.7, vjust=-0.75) + 
+  geom_text(aes(label = Amount_billion_dollars, y = Amount_billion_dollars * coeff),hjust=0.7, vjust=2.2)+
+  labs(x="Year",caption="Source: General Administration of Customs of China \n https://agdatanews.substack.com")
+
+plot_3a
+
+
+### Plot of The Average Imported Price of Durian
+plot_3b <- ggplot(durian_data, aes(x = Year, y = Price_dollars,label = Price_dollars)) +           
+  geom_line(color="#69b3a2", size=2, alpha=0.9)+
+  geom_point(color="#69b3a2", size=4, alpha=0.9)+
+  geom_text(hjust=0.7, vjust=-1.5)+
+  ggtitle("Average Import Price of Durian")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.4))+
+  labs(x="Year", y = "Price($/kg)",caption="Source: General Administration of Customs of China \n https://agdatanews.substack.com")+
+  ylim(2,5.5)
+
+plot_3b
+
+plot_3 <- ggarrange(plot_3a,plot_3b,nrow=1)
+plot_3
+ggsave("plot_3.png",bg="white")
+
+
+
+### Plots of Durian Imported and Exported Value by Country/Region in 2021
+GET("https://files.asmith.ucdavis.edu/Share.xlsx", write_disk(tf4a <- tempfile(fileext = ".xlsx")))
+share_data=read_excel(tf4a) %>% mutate(value=round(`Imported Value(Thousand Dorllar)`/1000000,digits=2))
+GET("https://files.asmith.ucdavis.edu/Export.xlsx", write_disk(tf4b <- tempfile(fileext = ".xlsx")))
+export_data=read_excel(tf4b) %>% mutate(value=round(`Export value`/1000000,digits=2))
+
+# Plot 4a
+plot_4a <- ggplot(share_data, aes(x=share, y=value, label=value,fill=share)) +
+  geom_bar(position = "stack", stat="identity", show.legend = FALSE)+
+  labs(x = "Fruit", y = "Billion Dollars",caption="Source: Trade Map \n https://agdatanews.substack.com")+
+  geom_text(hjust=0.7, vjust=-1)+
+  ggtitle("Durian Imported Fruit Value by Country in 2021")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))+
+  ylim(0,5)+
+  scale_fill_brewer(palette="Set2") 
+
+plot_4a
+
+
+# Plot 4b
+plot_4b <- ggplot(export_data, aes(x=`Country/Region`, y=value, label=value,fill=`Country/Region`)) +
+  geom_bar(position = "stack", stat="identity", show.legend = FALSE)+
+  labs(x = "Fruit", y = "Billion Dollars",caption="Source: Trade Map \n https://agdatanews.substack.com")+
+  geom_text(hjust=0.7, vjust=-1)+
+  ggtitle("Durian Exported Fruit Value by Country in 2021")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(angle = 90))+
+  ylim(0,4)+
+  scale_fill_brewer(palette="Dark2") 
+
+plot_4b
+
+
+plot_4 <- ggarrange(plot_4a,plot_4b,nrow=1)
+plot_4
+ggsave("plot_4.png",bg="white")
 
 
 
