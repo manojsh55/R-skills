@@ -12,6 +12,26 @@ mutate(B = ifelse(A <= 0, 100, 100+D))
 
 B = {100 IF A <= 0 ; 100+D if A > 0}
 
+
+##Three important functions
+
+# Reduce text or point size
+plot <- ggplot(data, aes(x = category, y = value)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = scales::percent(value, scale = 1)), vjust = -0.5, size = 3)
+
+# Example with coord_cartesian
+plot <- ggplot(data, aes(x = category, y = value)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = scales::percent(value, scale = 1)), vjust = -0.5) +
+  coord_cartesian(ylim = c(0, 1.2))  # Set y-axis limit as needed
+
+# Example with adjusted plot margins
+plot <- ggplot(data, aes(x = category, y = value)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = scales::percent(value, scale = 1)), vjust = -0.5) +
+  theme(plot.margin = margin(1, 1, 2, 2, "cm"))  # Adjust the margins as needed
+
 ###Analysis of " https://agdatanews.substack.com/p/durian-the-king-of-fruits-is-booming?r=i2qe&utm_campaign=post&utm_medium=web"
 
 rm(list=ls())
